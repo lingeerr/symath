@@ -1,0 +1,30 @@
+{
+  "name": "symath-mcp",
+  "version": "0.1.0",
+  "description": "High-precision mathematics MCP server with expression, LaTeX, statistics, number theory, and calculus tools.",
+  "type": "module",
+  "bin": {
+    "symath-mcp": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "inspect": "npx @modelcontextprotocol/inspector node src/index.js",
+    "test": "node test/smoke.test.js"
+  },
+  "keywords": [
+    "mcp",
+    "math",
+    "latex",
+    "high-precision",
+    "model-context-protocol"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.3",
+    "mathjs": "^13.2.3",
+    "zod": "^3.23.8"
+  }
+}
