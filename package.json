@@ -4,9 +4,9 @@
   "description": "High-precision mathematics MCP server with expression, LaTeX, statistics, number theory, and calculus tools.",
   "type": "module",
   "bin": {
-    "symath-mcp": "./src/stdio.js",
-    "symath-mcp-http": "./src/http.js",
-    "symath-mcp-sse": "./src/sse.js"
+    "symath-mcp": "src/stdio.js",
+    "symath-mcp-http": "src/http.js",
+    "symath-mcp-sse": "src/sse.js"
   },
   "scripts": {
     "start": "node src/stdio.js",
