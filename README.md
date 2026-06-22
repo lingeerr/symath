@@ -1,6 +1,6 @@
 # SyMath MCP
 
-SyMath MCP is a high-precision mathematics server for MCP clients such as Claude Desktop. It gives LLMs a reliable calculator layer for exact integer work, configurable decimal precision, symbolic derivatives/simplification, numerical calculus, statistics, number theory, and common LaTeX-style math input.
+SyMath MCP is a high-precision mathematics server for MCP clients. It gives LLMs a reliable calculator layer for exact integer work, configurable decimal precision, symbolic derivatives and simplification, numerical calculus, statistics, number theory, and common LaTeX-style math input.
 
 ## Features
 
@@ -10,6 +10,10 @@ SyMath MCP is a high-precision mathematics server for MCP clients such as Claude
 - Symbolic derivative and simplification support.
 - Exact integer algorithms using `BigInt` for gcd, lcm, prime checks, factorization, modular exponentiation, and modular inverse.
 - Structured errors for edge cases such as division by zero, invalid domains, malformed LaTeX, and non-integer number theory input.
+- Official MCP transports:
+  - `stdio` for local desktop clients.
+  - Streamable HTTP at `/mcp` for remote or local HTTP clients.
+  - Legacy HTTP+SSE for older clients that have not migrated yet.
 
 ## Install
 
@@ -17,30 +21,160 @@ SyMath MCP is a high-precision mathematics server for MCP clients such as Claude
 npm install
 ```
 
-## Run
+After npm publication, users can run it without cloning:
+
+```bash
+npx symath-mcp
+```
+
+## Run Locally
+
+### stdio
+
+Use this for Claude Desktop and other local MCP clients that launch a command.
 
 ```bash
 npm start
 ```
 
-The server uses MCP over stdio, so it is meant to be launched by an MCP client.
+Equivalent direct command:
 
-## Claude Desktop Configuration
+```bash
+node /Users/fengling/AiProjects/symath/src/stdio.js
+```
 
-Add this to your Claude Desktop MCP configuration:
+### Streamable HTTP
+
+Use this for clients that connect to an MCP URL.
+
+```bash
+npm run start:http
+```
+
+Defaults:
+
+- URL: `http://127.0.0.1:3000/mcp`
+- Health check: `http://127.0.0.1:3000/health`
+
+Configuration:
+
+```bash
+HOST=0.0.0.0 PORT=3000 MCP_PATH=/mcp npm run start:http
+```
+
+### Legacy SSE
+
+SSE is deprecated by the MCP SDK, but some older clients still support it.
+
+```bash
+npm run start:sse
+```
+
+Defaults:
+
+- SSE endpoint: `http://127.0.0.1:3000/mcp`
+- Messages endpoint: `http://127.0.0.1:3000/messages`
+
+Configuration:
+
+```bash
+HOST=0.0.0.0 PORT=3000 SSE_PATH=/mcp MESSAGES_PATH=/messages npm run start:sse
+```
+
+## Client Configuration
+
+### Claude Desktop, local clone
+
+Add this to Claude Desktop's MCP configuration and restart Claude Desktop:
 
 ```json
 {
   "mcpServers": {
     "symath": {
       "command": "node",
-      "args": ["/Users/fengling/AiProjects/symath/src/index.js"]
+      "args": ["/Users/fengling/AiProjects/symath/src/stdio.js"]
     }
   }
 }
 ```
 
-Restart Claude Desktop after saving the configuration.
+### Claude Desktop, after npm publication
+
+```json
+{
+  "mcpServers": {
+    "symath": {
+      "command": "npx",
+      "args": ["-y", "symath-mcp"]
+    }
+  }
+}
+```
+
+### MCP clients with Streamable HTTP support
+
+Start the HTTP server:
+
+```bash
+npm run start:http
+```
+
+Then configure the client URL:
+
+```text
+http://127.0.0.1:3000/mcp
+```
+
+For a remote deployment, replace the URL with your public HTTPS endpoint, for example:
+
+```text
+https://your-domain.example/mcp
+```
+
+### Older SSE clients
+
+Start the SSE server:
+
+```bash
+npm run start:sse
+```
+
+Configure:
+
+```text
+SSE URL:      http://127.0.0.1:3000/mcp
+Messages URL: http://127.0.0.1:3000/messages
+```
+
+## Publish
+
+### GitHub
+
+```bash
+git add .
+git commit -m "Support all MCP transports"
+git push
+```
+
+### npm
+
+Log in once:
+
+```bash
+npm login
+```
+
+Publish:
+
+```bash
+npm publish --access public
+```
+
+Package binaries:
+
+- `symath-mcp`: stdio server.
+- `symath-mcp-http`: Streamable HTTP server.
+- `symath-mcp-sse`: legacy SSE server.
 
 ## Tools
 
@@ -79,4 +213,8 @@ Restart Claude Desktop after saving the configuration.
 
 ```bash
 npm test
+node --check src/server.js
+node --check src/stdio.js
+node --check src/http.js
+node --check src/sse.js
 ```

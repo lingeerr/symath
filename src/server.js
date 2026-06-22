@@ -1,7 +1,4 @@
-#!/usr/bin/env node
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { all, create } from "mathjs";
 import { z } from "zod";
 
@@ -740,108 +737,109 @@ function evaluateCompiledAt(math, code, variable, value) {
   return result;
 }
 
-const server = new McpServer({
-  name: "symath-mcp",
-  version: "0.1.0",
-});
-
 const precisionSchema = z.number().int().min(1).max(MAX_PRECISION).default(DEFAULT_PRECISION);
 const formatSchema = z.enum(["auto", "fixed", "scientific"]).default("auto");
 const expressionFormatSchema = z.enum(["auto", "mathjs", "latex"]).default("auto");
 
-server.registerTool(
-  "calculate",
-  {
-    title: "High precision expression calculator",
-    description: "Evaluate a mathjs or common LaTeX math expression with configurable high precision.",
-    inputSchema: {
-      expression: z.string().min(1).describe("Expression to evaluate. Supports mathjs syntax and common LaTeX such as \\frac and \\sqrt."),
-      inputFormat: expressionFormatSchema.describe("Input expression format."),
-      precision: precisionSchema.describe("Decimal precision in significant digits."),
-      format: formatSchema.describe("Output numeric format."),
-    },
-  },
-  async (input) => withErrors(() => evaluateExpression(input)),
-);
+export function createSymathServer() {
+  const server = new McpServer({
+    name: "symath-mcp",
+    version: "0.2.0",
+  });
 
-server.registerTool(
-  "arithmetic",
-  {
-    title: "Basic high precision arithmetic",
-    description: "Perform add, subtract, multiply, divide, power, and sqrt with explicit operands.",
-    inputSchema: {
-      operation: z.enum(["add", "subtract", "multiply", "divide", "power", "sqrt"]),
-      values: z.array(z.union([z.string(), z.number()])).min(1).describe("Operands. Strings are recommended for very large or precise numbers."),
-      precision: precisionSchema,
-      format: formatSchema,
+  server.registerTool(
+    "calculate",
+    {
+      title: "High precision expression calculator",
+      description: "Evaluate a mathjs or common LaTeX math expression with configurable high precision.",
+      inputSchema: {
+        expression: z.string().min(1).describe("Expression to evaluate. Supports mathjs syntax and common LaTeX such as \\frac and \\sqrt."),
+        inputFormat: expressionFormatSchema.describe("Input expression format."),
+        precision: precisionSchema.describe("Decimal precision in significant digits."),
+        format: formatSchema.describe("Output numeric format."),
+      },
     },
-  },
-  async (input) => withErrors(() => arithmeticOperation(input)),
-);
+    async (input) => withErrors(() => evaluateExpression(input)),
+  );
 
-server.registerTool(
-  "statistics",
-  {
-    title: "High precision statistics",
-    description: "Compute count, sum, mean, median, min, max, range, variance, standard deviation, percentile, or summary.",
-    inputSchema: {
-      operation: z.enum(["count", "sum", "mean", "median", "min", "max", "range", "variance", "stddev", "percentile", "summary"]),
-      values: z.array(z.union([z.string(), z.number()])).min(1),
-      sample: z.boolean().default(false).describe("Use sample variance/stddev denominator n-1."),
-      percentile: z.number().min(0).max(100).optional().describe("Required when operation is percentile."),
-      precision: precisionSchema,
-      format: formatSchema,
+  server.registerTool(
+    "arithmetic",
+    {
+      title: "Basic high precision arithmetic",
+      description: "Perform add, subtract, multiply, divide, power, and sqrt with explicit operands.",
+      inputSchema: {
+        operation: z.enum(["add", "subtract", "multiply", "divide", "power", "sqrt"]),
+        values: z.array(z.union([z.string(), z.number()])).min(1).describe("Operands. Strings are recommended for very large or precise numbers."),
+        precision: precisionSchema,
+        format: formatSchema,
+      },
     },
-  },
-  async (input) => withErrors(() => statisticsOperation(input)),
-);
+    async (input) => withErrors(() => arithmeticOperation(input)),
+  );
 
-server.registerTool(
-  "number_theory",
-  {
-    title: "Exact number theory",
-    description: "Run exact integer operations using BigInt.",
-    inputSchema: {
-      operation: z.enum(["gcd", "lcm", "isPrime", "primeFactors", "modPow", "modInverse", "totient"]),
-      values: z.array(z.union([z.string(), z.number()])).min(1).describe("Integer operands. Use strings for large integers."),
+  server.registerTool(
+    "statistics",
+    {
+      title: "High precision statistics",
+      description: "Compute count, sum, mean, median, min, max, range, variance, standard deviation, percentile, or summary.",
+      inputSchema: {
+        operation: z.enum(["count", "sum", "mean", "median", "min", "max", "range", "variance", "stddev", "percentile", "summary"]),
+        values: z.array(z.union([z.string(), z.number()])).min(1),
+        sample: z.boolean().default(false).describe("Use sample variance/stddev denominator n-1."),
+        percentile: z.number().min(0).max(100).optional().describe("Required when operation is percentile."),
+        precision: precisionSchema,
+        format: formatSchema,
+      },
     },
-  },
-  async (input) => withErrors(() => numberTheoryOperation(input)),
-);
+    async (input) => withErrors(() => statisticsOperation(input)),
+  );
 
-server.registerTool(
-  "calculus",
-  {
-    title: "Calculus and symbolic algebra",
-    description: "Differentiate symbolically, simplify symbolically, or compute definite integrals numerically with Simpson's rule.",
-    inputSchema: {
-      operation: z.enum(["derivative", "simplify", "integrate"]),
-      expression: z.string().min(1),
-      variable: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/).default("x"),
-      inputFormat: expressionFormatSchema,
-      lower: z.union([z.string(), z.number()]).optional().describe("Lower bound for definite integration."),
-      upper: z.union([z.string(), z.number()]).optional().describe("Upper bound for definite integration."),
-      intervals: z.number().int().min(2).max(100000).default(1000).describe("Simpson intervals. Odd values are rounded up to the next even value."),
-      precision: precisionSchema,
-      format: formatSchema,
+  server.registerTool(
+    "number_theory",
+    {
+      title: "Exact number theory",
+      description: "Run exact integer operations using BigInt.",
+      inputSchema: {
+        operation: z.enum(["gcd", "lcm", "isPrime", "primeFactors", "modPow", "modInverse", "totient"]),
+        values: z.array(z.union([z.string(), z.number()])).min(1).describe("Integer operands. Use strings for large integers."),
+      },
     },
-  },
-  async (input) => withErrors(() => calculusOperation(input)),
-);
+    async (input) => withErrors(() => numberTheoryOperation(input)),
+  );
 
-server.registerTool(
-  "latex_to_expression",
-  {
-    title: "LaTeX to math expression converter",
-    description: "Convert supported LaTeX math syntax into a mathjs-compatible expression.",
-    inputSchema: {
-      latex: z.string().min(1),
+  server.registerTool(
+    "calculus",
+    {
+      title: "Calculus and symbolic algebra",
+      description: "Differentiate symbolically, simplify symbolically, or compute definite integrals numerically with Simpson's rule.",
+      inputSchema: {
+        operation: z.enum(["derivative", "simplify", "integrate"]),
+        expression: z.string().min(1),
+        variable: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/).default("x"),
+        inputFormat: expressionFormatSchema,
+        lower: z.union([z.string(), z.number()]).optional().describe("Lower bound for definite integration."),
+        upper: z.union([z.string(), z.number()]).optional().describe("Upper bound for definite integration."),
+        intervals: z.number().int().min(2).max(100000).default(1000).describe("Simpson intervals. Odd values are rounded up to the next even value."),
+        precision: precisionSchema,
+        format: formatSchema,
+      },
     },
-  },
-  async ({ latex }) => withErrors(() => ({
-    expression: latexToMathExpression(latex),
-  })),
-);
+    async (input) => withErrors(() => calculusOperation(input)),
+  );
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+  server.registerTool(
+    "latex_to_expression",
+    {
+      title: "LaTeX to math expression converter",
+      description: "Convert supported LaTeX math syntax into a mathjs-compatible expression.",
+      inputSchema: {
+        latex: z.string().min(1),
+      },
+    },
+    async ({ latex }) => withErrors(() => ({
+      expression: latexToMathExpression(latex),
+    })),
+  );
+
+  return server;
+}

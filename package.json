@@ -1,14 +1,18 @@
 {
   "name": "symath-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "High-precision mathematics MCP server with expression, LaTeX, statistics, number theory, and calculus tools.",
   "type": "module",
   "bin": {
-    "symath-mcp": "./src/index.js"
+    "symath-mcp": "./src/stdio.js",
+    "symath-mcp-http": "./src/http.js",
+    "symath-mcp-sse": "./src/sse.js"
   },
   "scripts": {
-    "start": "node src/index.js",
-    "inspect": "npx @modelcontextprotocol/inspector node src/index.js",
+    "start": "node src/stdio.js",
+    "start:http": "node src/http.js",
+    "start:sse": "node src/sse.js",
+    "inspect": "npx @modelcontextprotocol/inspector node src/stdio.js",
     "test": "node test/smoke.test.js"
   },
   "keywords": [
@@ -19,6 +23,19 @@
     "model-context-protocol"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lingeerr/symath.git"
+  },
+  "homepage": "https://github.com/lingeerr/symath#readme",
+  "bugs": {
+    "url": "https://github.com/lingeerr/symath/issues"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=20"
   },
